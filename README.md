@@ -5,9 +5,9 @@
 ## Mô Tả Dự Án
 
 Hệ thống phát hiện **3 trạng thái hoạt động của người dùng** dựa trên **CSI (Channel State Information)** từ WiFi:
-- 🔴 **Trạng thái 0**: Không có người
-- 🟡 **Trạng thái 1**: Đứng yên / Ngồi tĩnh
-- 🟢 **Trạng thái 2**: Đang hoạt động (vẫy tay, đi bộ, v.v.)
+-  **Trạng thái 0**: Không có người
+-  **Trạng thái 1**: Đứng yên / Ngồi tĩnh
+-  **Trạng thái 2**: Đang hoạt động (vẫy tay, đi bộ, v.v.)
 
 ### 🎯 Mục Đích
 Xây dựng hệ thống cảm biến thông minh không cần camera, không xâm phạm riêng tư, sử dụng tín hiệu WiFi để phát hiện chuyển động người.
@@ -104,7 +104,7 @@ idf.py -p COM12 build flash monitor
 
 ---
 
-## 🔧 Tham Số Chính (Có thể Tuỳ Chỉnh)
+##  Tham Số Chính (Có thể Tuỳ Chỉnh)
 
 File cấu hình: `backend/main.py` (dòng 18-31)
 
@@ -118,7 +118,7 @@ PASS_THRESHOLD = 50.0          # % hoạt động tối thiểu để "Đạt" (
 
 ---
 
-## 📈 Luồng Xử Lý (12 Giai Đoạn)
+##  Luồng Xử Lý (12 Giai Đoạn)
 
 1. **Nhận CSI** từ ESP32 RX qua Serial (384 giá trị I/Q)
 2. **Tách I & Q** → Tính Amplitude
@@ -141,12 +141,12 @@ PASS_THRESHOLD = 50.0          # % hoạt động tối thiểu để "Đạt" (
 
 ##  Tính Năng Dashboard
 
-- 📊 **Biểu đồ Real-time** - Line chart năng lượng CSI cập nhật liên tục
-- 🎯 **Dự đoán AI** - Hiển thị state hiện tại với màu sắc (xanh/vàng/đỏ)
-- 📈 **Biểu đồ Thống kê** - Pie chart tỷ lệ % 3 trạng thái (hiện khi bấm Dừng)
-- ⚙️ **Thông Số Kỹ Thuật** - Motion score, Energy, Threshold, % hoạt động
-- 🔔 **Trạng thái Hệ thống** - LED status nháy, kết nối WebSocket
-- 💾 **Lưu Phiên** - Thống kê tròn, đánh giá Đạt/Không Đạt
+-  **Biểu đồ Real-time** - Line chart năng lượng CSI cập nhật liên tục
+-  **Dự đoán AI** - Hiển thị state hiện tại với màu sắc (xanh/vàng/đỏ)
+-  **Biểu đồ Thống kê** - Pie chart tỷ lệ % 3 trạng thái (hiện khi bấm Dừng)
+-  **Thông Số Kỹ Thuật** - Motion score, Energy, Threshold, % hoạt động
+-  **Trạng thái Hệ thống** - LED status nháy, kết nối WebSocket
+-  **Lưu Phiên** - Thống kê tròn, đánh giá Đạt/Không Đạt
 
 ---
 
@@ -171,7 +171,7 @@ Xem file: **[SETUP.md](SETUP.md)**
 
 ---
 
-## 🔍 Giải Thích Thuật Toán
+##  Giải Thích Thuật Toán
 
 Xem file: **[ALGORITHM.md](ALGORITHM.md)**
 

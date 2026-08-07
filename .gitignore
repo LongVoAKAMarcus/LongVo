@@ -1,0 +1,80 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+pip-wheel-metadata/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+venv/
+ENV/
+env/
+.venv
+
+# IDE & Editor
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+.project
+.pydevproject
+.settings/
+*.sublime-project
+*.sublime-workspace
+
+# ESP-IDF Build
+build/
+*.o
+*.a
+*.elf
+*.bin
+*.map
+sdkconfig.old
+.idf_py_lock.json
+managed_components/
+
+# Project Specific
+*.log
+session_log.txt
+*.csv
+debug.log
+.pytest_cache/
+.coverage
+htmlcov/
+
+# OS
+Thumbs.db
+.DS_Store
+.directory
+*.lnk
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# Temporary
+*.tmp
+*.bak
+*.backup
+*~
+\#*#
+.\#*

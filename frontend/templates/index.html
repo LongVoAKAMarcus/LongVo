@@ -1,0 +1,597 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hệ thống giám sát CSI - Bách Khoa</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        :root {
+            --bg-color: #0b0f19;
+            --card-bg: #111827;
+            --border-color: #1f2937;
+            --accent-green: #10b981;
+            --accent-red: #ef4444;
+            --accent-yellow: #f59e0b;
+            --text-main: #f3f4f6;
+            --text-muted: #9ca3af;
+        }
+
+        body {
+            font-family: 'Inter', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 1400px;
+        }
+
+        /* --- HEADER SCADA --- */
+        .header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background-color: var(--card-bg);
+            padding: 15px 25px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            border: 1px solid var(--border-color);
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.4);
+        }
+
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .header img {
+            height: 45px;
+            background: white;
+            padding: 4px;
+            border-radius: 6px;
+        }
+
+        .header h2 {
+            margin: 0;
+            font-size: 19px;
+            letter-spacing: 0.5px;
+            color: var(--text-main);
+            text-transform: uppercase;
+            font-weight: 700;
+        }
+
+        .header-right {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .clock-display {
+            font-size: 16px;
+            font-family: monospace;
+            color: var(--text-muted);
+            letter-spacing: 1px;
+            background: #1f2937;
+            padding: 5px 12px;
+            border-radius: 6px;
+            border: 1px solid #374151;
+        }
+
+        .system-status-badge {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background: #1f2937;
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 13px;
+            font-weight: 700;
+            letter-spacing: 0.5px;
+        }
+
+        /* Hiệu ứng nháy LED */
+        @keyframes pulse-green {
+            0% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7); }
+            70% { box-shadow: 0 0 0 6px rgba(16, 185, 129, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
+        }
+        @keyframes pulse-red {
+            0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7); }
+            70% { box-shadow: 0 0 0 6px rgba(239, 68, 68, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
+        }
+
+        .dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background-color: var(--text-muted);
+        }
+        .dot.active {
+            background-color: var(--accent-green);
+            animation: pulse-green 1.5s infinite;
+        }
+        .dot.error {
+            background-color: var(--accent-red);
+            animation: pulse-red 1s infinite;
+        }
+
+        /* --- METRICS GRID --- */
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .metric-card {
+            background-color: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            padding: 18px 20px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            position: relative;
+            overflow: hidden;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .metric-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 15px rgba(0,0,0,0.3);
+        }
+
+        .metric-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 4px;
+            height: 100%;
+            background: var(--text-muted);
+            transition: background 0.3s ease;
+        }
+
+        .metric-card.green::before { background: var(--accent-green); }
+        .metric-card.yellow::before { background: var(--accent-yellow); }
+        .metric-card.red::before { background: var(--accent-red); }
+        .metric-card.blue::before { background: #3b82f6; }
+
+        .metric-title {
+            font-size: 12px;
+            text-transform: uppercase;
+            color: var(--text-muted);
+            letter-spacing: 0.5px;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+
+        .metric-value {
+            font-size: 24px;
+            font-weight: 700;
+            color: var(--text-main);
+            transition: color 0.3s ease;
+        }
+
+        /* --- CONTROL PANEL BAR --- */
+        .control-panel {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background-color: var(--card-bg);
+            padding: 15px 20px;
+            border-radius: 10px;
+            border: 1px solid var(--border-color);
+            margin-bottom: 20px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.2);
+        }
+
+        #status {
+            font-size: 14px;
+            color: var(--text-muted);
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .controls {
+            display: flex;
+            gap: 12px;
+        }
+
+        .btn {
+            padding: 10px 24px;
+            font-size: 13px;
+            font-weight: 700;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            text-transform: uppercase;
+            transition: all 0.2s ease;
+            letter-spacing: 0.5px;
+        }
+
+        .btn-start { background: var(--accent-green); color: #0b0f19; }
+        .btn-start:hover { background: #059669; transform: scale(1.02); }
+
+        .btn-stop { background: var(--accent-red); color: white; }
+        .btn-stop:hover { background: #dc2626; transform: scale(1.02); }
+
+        .btn:disabled {
+            background: #374151;
+            color: #6b7280;
+            cursor: not-allowed;
+            transform: scale(1);
+        }
+
+        /* --- CHARTS SECTION --- */
+        .dashboard-main {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 20px;
+        }
+
+        .chart-box {
+            background-color: var(--card-bg);
+            border: 1px solid var(--border-color);
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: inset 0 2px 10px rgba(0,0,0,0.2);
+        }
+
+        .chart-header {
+            font-size: 14px;
+            font-weight: 600;
+            text-transform: uppercase;
+            color: var(--text-muted);
+            margin-bottom: 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 10px;
+        }
+
+        /* --- STATS BOX --- */
+        .stats-box {
+            display: none;
+            background-color: var(--card-bg);
+            border: 1px solid var(--border-color);
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+            animation: fadeIn 0.5s ease-out forwards;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .stats-chart-wrapper {
+            width: 100%;
+            max-width: 320px;
+            margin: 0 auto;
+            padding-top: 10px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <!-- HEADER SCADA -->
+    <div class="header">
+        <div class="header-left">
+            <img src="/static/HCMUT_official_logo.png" alt="Logo Bách Khoa" onerror="this.style.display='none'">
+            <h2>Hệ Thống Giám Sát Hoạt Động CSI</h2>
+        </div>
+        <div class="header-right">
+            <div class="clock-display" id="live-clock">00:00:00</div>
+            <div class="system-status-badge">
+                <div class="dot" id="system-dot"></div>
+                <span id="badge-text" style="color: var(--text-muted)">STANDBY</span>
+            </div>
+        </div>
+    </div>
+    
+    <!-- METRICS GRID (Thẻ thông số KPI) -->
+    <div class="metrics-grid">
+        <div class="metric-card yellow" id="card-pred">
+            <div class="metric-title">Dự đoán AI (Pattern)</div>
+            <div class="metric-value" id="prediction">Sẵn sàng...</div>
+        </div>
+        <div class="metric-card blue" id="card-std">
+            <div class="metric-title">Biên độ dao động (STD)</div>
+            <div class="metric-value" id="stdValue">0.00</div>
+        </div>
+        <div class="metric-card green" id="card-percent">
+            <div class="metric-title">Tỷ lệ Hoạt Động (Active)</div>
+            <div class="metric-value" id="percentActive">0.0%</div>
+        </div>
+        <div class="metric-card red" id="card-pass">
+            <div class="metric-title">Trạng thái Hệ thống</div>
+            <div class="metric-value" id="passStatus">Chờ đánh giá</div>
+        </div>
+    </div>
+
+    <!-- CONTROL PANEL -->
+    <div class="control-panel">
+        <div id="status">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right:5px;"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+            Kết nối: Đang chờ lệnh khởi động hệ thống...
+        </div>
+        <div class="controls">
+            <button id="btn-start" class="btn btn-start" onclick="startSystem()">Khởi Động Quét CSI</button>
+            <button id="btn-stop" class="btn btn-stop" onclick="stopSystem()" disabled>Dừng & Báo Cáo</button>
+        </div>
+    </div>
+    
+    <!-- MAIN CHARTS -->
+    <div class="dashboard-main">
+        <div class="chart-box" id="realtime-box">
+            <div class="chart-header">
+                <span>Đồ thị năng lượng sóng CSI Thời gian thực (Real-time Stream)</span>
+                <span style="font-size: 11px; color: var(--accent-green);">Live ◉</span>
+            </div>
+            <div style="height: 320px;">
+                <canvas id="csiChart"></canvas>
+            </div>
+        </div>
+
+        <!-- Biểu đồ thống kê tròn (Chỉ hiện khi bấm Dừng) -->
+        <div class="stats-box" id="stats-box">
+            <div class="chart-header" style="justify-content: center; color: var(--accent-green); font-size: 16px; border:none; margin-bottom: 0;">
+                THỐNG KÊ TỔNG KẾT PHIÊN LÀM VIỆC
+            </div>
+            <div class="stats-chart-wrapper">
+                <canvas id="statsChart"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // --- ĐỒNG HỒ REAL-TIME ---
+    function updateClock() {
+        const now = new Date();
+        const timeString = now.toLocaleTimeString('vi-VN', { hour12: false });
+        document.getElementById('live-clock').innerText = timeString;
+    }
+    setInterval(updateClock, 1000);
+    updateClock();
+
+    // --- CẤU HÌNH LOGIC ---
+    const MAX_FRAMES = 150;
+    const PASS_PERCENT = 50; 
+    let waveData = new Array(MAX_FRAMES).fill(0);
+    let labels = new Array(MAX_FRAMES).fill('');
+    
+    let ws = null;
+    let isRunning = false;
+    let labelCounts = {}; 
+    let statsChartInstance = null;
+
+    // --- CẤU HÌNH BIỂU ĐỒ ĐƯỜNG (REAL-TIME) ---
+    const ctx = document.getElementById('csiChart').getContext('2d');
+    const csiChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: labels,
+            datasets: [{
+                label: 'Energy Level',
+                data: waveData,
+                borderColor: '#10b981',
+                borderWidth: 2,
+                pointRadius: 0,
+                fill: true,
+                backgroundColor: 'rgba(16, 185, 129, 0.08)',
+                tension: 0.3,
+                borderJoinStyle: 'round'
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                x: { display: false },
+                y: {
+                    min: 0,
+                    suggestedMax: 80,
+                    grid: { color: 'rgba(255, 255, 255, 0.05)', drawBorder: false },
+                    ticks: { color: '#9ca3af', font: { size: 11, family: 'monospace' } }
+                }
+            },
+            plugins: { 
+                legend: { display: false },
+                tooltip: { enabled: false }
+            },
+            animation: { duration: 0 },
+            interaction: { mode: 'nearest', axis: 'x', intersect: false }
+        }
+    });
+
+    // --- HÀM BẮT ĐẦU ---
+    function startSystem() {
+        if (isRunning) return;
+        isRunning = true;
+        labelCounts = {}; 
+        
+        document.getElementById('btn-start').disabled = true;
+        document.getElementById('btn-stop').disabled = false;
+        document.getElementById('stats-box').style.display = 'none';
+        
+        document.getElementById('system-dot').className = 'dot active';
+        document.getElementById('badge-text').innerText = "RUNNING";
+        document.getElementById('badge-text').style.color = "var(--accent-green)";
+        
+        waveData.fill(0);
+        csiChart.update();
+
+        ws = new WebSocket("ws://" + window.location.host + "/ws");
+
+        ws.onopen = function() {
+            document.getElementById("status").innerHTML = `<span style="color: var(--accent-green)">● Kết nối thành công: Đang thu thập luồng CSI từ Vi điều khiển...</span>`;
+        };
+
+        ws.onmessage = function(event) {
+            if (!isRunning) return;
+            const data = JSON.parse(event.data);
+            const ai_label = data.prediction;
+
+            document.getElementById("prediction").innerText = ai_label;
+            
+            waveData.shift();
+            waveData.push(data.energy);
+            csiChart.update('none');
+
+            const clean_label = ai_label.split('(')[0].trim();
+
+            if (data.smooth_std !== undefined) {
+                document.getElementById('stdValue').innerText = Number(data.smooth_std).toFixed(2);
+            }
+
+            if (data.percent_active !== undefined) {
+                const p = Number(data.percent_active).toFixed(1);
+                document.getElementById('percentActive').innerText = p + '%';
+                
+                const passElem = document.getElementById('passStatus');
+                if (data.percent_active >= PASS_PERCENT) {
+                    passElem.innerText = 'ĐẠT YÊU CẦU';
+                    passElem.style.color = 'var(--accent-green)';
+                    document.getElementById('card-pass').className = 'metric-card green';
+                } else {
+                    passElem.innerText = 'CHƯA ĐẠT';
+                    passElem.style.color = 'var(--accent-yellow)';
+                    document.getElementById('card-pass').className = 'metric-card yellow';
+                }
+            }
+
+            // Đồng bộ màu sắc thẻ Dự đoán theo data.class (0: Trống, 1: Ngồi tĩnh, 2: Hoạt động)
+            const predCard = document.getElementById('card-pred');
+            const predText = document.getElementById("prediction");
+
+            if (data.class === 2) {
+                predCard.className = 'metric-card green';
+                predText.style.color = "var(--accent-green)";
+            } else if (data.class === 1) {
+                predCard.className = 'metric-card yellow';
+                predText.style.color = "var(--accent-yellow)";
+            } else if (data.class === 0) {
+                predCard.className = 'metric-card red';
+                predText.style.color = "var(--accent-red)";
+            } else {
+                predCard.className = 'metric-card blue';
+                predText.style.color = "var(--text-main)";
+            }
+
+            // --- ĐÃ SỬA: Cho phép thu thập đầy đủ cả 3 nhãn (Không có người, Đứng yên, Đang hoạt động) ---
+            if (clean_label && !clean_label.includes("khởi động") && !clean_label.includes("Chờ") && !clean_label.includes("Lỗi")) {
+                labelCounts[clean_label] = (labelCounts[clean_label] || 0) + 1;
+            }
+        };
+
+        ws.onclose = function() {
+            if (isRunning) {
+                document.getElementById("status").innerHTML = `<span style="color: var(--accent-red)">⚠ CẢNH BÁO: Mất kết nối luồng dữ liệu (WebSocket Closed)!</span>`;
+                document.getElementById('system-dot').className = 'dot error';
+                document.getElementById('badge-text').innerText = "DISCONNECTED";
+                document.getElementById('badge-text').style.color = "var(--accent-red)";
+            }
+        };
+    }
+
+    // --- HÀM DỪNG VÀ THỐNG KÊ ---
+    function stopSystem() {
+        isRunning = false;
+        if (ws) ws.close();
+
+        document.getElementById('btn-start').disabled = false;
+        document.getElementById('btn-stop').disabled = true;
+        document.getElementById("status").innerHTML = `<span>■ Đã ngắt luồng thu thập. Hệ thống chuyển sang chế độ phân tích tổng kết.</span>`;
+
+        document.getElementById('system-dot').className = 'dot';
+        document.getElementById('badge-text').innerText = "STANDBY";
+        document.getElementById('badge-text').style.color = "var(--text-muted)";
+        
+        document.getElementById("prediction").style.color = "var(--text-main)";
+
+        drawStatsChart();
+    }
+
+    // --- HÀM VẼ BIỂU ĐỒ TRÒN ---
+    function drawStatsChart() {
+        document.getElementById('stats-box').style.display = 'block';
+        const ctxStats = document.getElementById('statsChart').getContext('2d');
+        
+        if (statsChartInstance) statsChartInstance.destroy();
+
+        const labelsData = Object.keys(labelCounts);
+        const valuesData = Object.values(labelCounts);
+
+        // Khớp màu cố định cho từng trạng thái để biểu đồ trực quan nhất:
+        // "Không có người" -> Xanh ngọc (#10b981)
+        // "Đứng yên" -> Vàng/Cam (#f59e0b)
+        // "Đang hoạt động" -> Xanh dương (#3b82f6) hoặc Đỏ tùy ý
+        const colorMap = {
+            "Không có người": "#10b981",
+            "Đứng yên": "#f59e0b",
+            "Đang hoạt động": "#3b82f6"
+        };
+        const bgColors = labelsData.map(label => colorMap[label] || '#8b5cf6');
+
+        statsChartInstance = new Chart(ctxStats, {
+            type: 'doughnut',
+            data: {
+                labels: labelsData.length > 0 ? labelsData : ['Chưa có dữ liệu'],
+                datasets: [{
+                    data: valuesData.length > 0 ? valuesData : [1],
+                    backgroundColor: labelsData.length > 0 ? bgColors : ['#374151'],
+                    borderWidth: 2,
+                    borderColor: '#111827',
+                    hoverOffset: 4
+                }]
+            },
+            options: {
+                responsive: true,
+                cutout: '65%',
+                plugins: {
+                    legend: { 
+                        position: 'bottom', 
+                        labels: { 
+                            color: '#f3f4f6', 
+                            font: { size: 12, family: 'Inter' },
+                            padding: 20
+                        } 
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                let label = context.label || '';
+                                if (label) { label += ': '; }
+                                if (context.parsed !== null) {
+                                    const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                                    const percentage = Math.round((context.parsed / total) * 100) + "%";
+                                    label += context.parsed + ' khung (' + percentage + ')';
+                                }
+                                return label;
+                            }
+                        }
+                    }
+                }
+            }
+        });
+    }
+</script>
+
+</body>
+</html>

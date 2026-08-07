@@ -9,7 +9,7 @@ Hệ thống phát hiện **3 trạng thái hoạt động của người dùng*
 -  **Trạng thái 1**: Đứng yên / Ngồi tĩnh
 -  **Trạng thái 2**: Đang hoạt động (vẫy tay, đi bộ, v.v.)
 
-### 🎯 Mục Đích
+###  Mục Đích
 Xây dựng hệ thống cảm biến thông minh không cần camera, không xâm phạm riêng tư, sử dụng tín hiệu WiFi để phát hiện chuyển động người.
 
 ---
@@ -153,10 +153,10 @@ PASS_THRESHOLD = 50.0          # % hoạt động tối thiểu để "Đạt" (
 ## Yêu Cầu Hệ Thống
 
 ### **Hardware**
-- ✅ 2x ESP32 (S3, C6, C3 hoặc Standard)
-- ✅ USB Cable x2 (nạp firmware + Serial debug)
-- ✅ Computer (chạy Python backend)
-- ✅ WiFi Router (để TX/RX kết nối)
+- 2x ESP32 (S3, C6, C3 hoặc Standard)
+- USB Cable x2 (nạp firmware + Serial debug)
+- Computer (chạy Python backend)
+- WiFi Router (để TX/RX kết nối)
 
 ### **Software**
 - Python 3.8+
@@ -201,13 +201,6 @@ Kiểm tra trong: Device Manager → Ports (COM & LPT)
 - Tăng `FEATURE_WINDOW` (từ 20 → 30)
 - Tăng `CALIBRATION_FRAMES` (từ 500 → 1000)
 - Điều chỉnh threshold động trong code
-
----
-## Cảm Ơn
-
-- Espressif Systems (ESP-IDF framework)
-- Cộng đồng CSI WiFi research
-- FastAPI & uvicorn team
 
 ---
 
